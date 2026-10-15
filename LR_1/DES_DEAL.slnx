@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="DES_DEAL.Tests/DES_DEAL.Tests.csproj" />
+  <Project Path="DES_DEAL/DES_DEAL.csproj" />
+</Solution>

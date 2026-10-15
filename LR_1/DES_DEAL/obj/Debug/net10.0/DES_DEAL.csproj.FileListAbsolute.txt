@@ -1,0 +1,11 @@
+/mnt/f/3_kurs/CRYPT/LR_1/DES_DEAL/bin/Debug/net10.0/DES_DEAL.deps.json
+/mnt/f/3_kurs/CRYPT/LR_1/DES_DEAL/bin/Debug/net10.0/DES_DEAL.dll
+/mnt/f/3_kurs/CRYPT/LR_1/DES_DEAL/bin/Debug/net10.0/DES_DEAL.pdb
+/mnt/f/3_kurs/CRYPT/LR_1/DES_DEAL/obj/Debug/net10.0/DES_DEAL.GeneratedMSBuildEditorConfig.editorconfig
+/mnt/f/3_kurs/CRYPT/LR_1/DES_DEAL/obj/Debug/net10.0/DES_DEAL.AssemblyInfoInputs.cache
+/mnt/f/3_kurs/CRYPT/LR_1/DES_DEAL/obj/Debug/net10.0/DES_DEAL.AssemblyInfo.cs
+/mnt/f/3_kurs/CRYPT/LR_1/DES_DEAL/obj/Debug/net10.0/DES_DEAL.csproj.CoreCompileInputs.cache
+/mnt/f/3_kurs/CRYPT/LR_1/DES_DEAL/obj/Debug/net10.0/DES_DEAL.dll
+/mnt/f/3_kurs/CRYPT/LR_1/DES_DEAL/obj/Debug/net10.0/refint/DES_DEAL.dll
+/mnt/f/3_kurs/CRYPT/LR_1/DES_DEAL/obj/Debug/net10.0/DES_DEAL.pdb
+/mnt/f/3_kurs/CRYPT/LR_1/DES_DEAL/obj/Debug/net10.0/ref/DES_DEAL.dll

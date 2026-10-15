@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "DES_DEAL/1.0.0": {
+        "runtime": {
+          "DES_DEAL.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "DES_DEAL/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
