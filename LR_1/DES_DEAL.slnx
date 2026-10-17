@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/DES_DEAL.Demo/">
+    <Project Path="DES_DEAL.Demo/DES_DEAL.Demo.csproj" />
+  </Folder>
   <Project Path="DES_DEAL.Tests/DES_DEAL.Tests.csproj" />
   <Project Path="DES_DEAL/DES_DEAL.csproj" />
 </Solution>

@@ -1,0 +1,16 @@
+# .NET Build results
+[Bb]in/
+[Oo]bj/
+[Ll]ogs/
+[Tt]emp/
+
+# Visual Studio / Rider files
+.vs/
+.idea/
+*.user
+*.suo
+*.cache
+
+# Output files from demo
+Output/
+TestData/

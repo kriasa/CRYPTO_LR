@@ -5,7 +5,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
-    <RootNamespace>CryptoLab.Demo</RootNamespace>
+    <RootNamespace>DES_DEAL.Demo</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Копируем одну общую папку TestData -->
     <None Include="TestData/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
