@@ -11,7 +11,7 @@ namespace RSA.Primality.Test
         {
             var test1 = _mathService.Gcd(a, n, GcdMethod.Binary);
             var test2 = _mathService.ModPow(a, n-1, n);
-            return (test1 == 1 && test2 == 1);
+            return test1 == 1 && test2 == 1;
         }
     }
 }
