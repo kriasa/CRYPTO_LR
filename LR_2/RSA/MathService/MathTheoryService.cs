@@ -39,7 +39,7 @@ namespace RSA.MathService
         public int JacobiSymbol(BigInteger a, BigInteger n)=>_jacobi.JacobiSymbol(a,n);
         public int LegendreSymbol(BigInteger a, BigInteger p)=>_legendre.LegendreSymbol(a,p);
         public (BigInteger gcd, BigInteger x, BigInteger y) ExtendedGcd(BigInteger a, BigInteger b)=>_extendedGcd.ExtendedGcd(a,b);
-        public BigInteger ModularPow(BigInteger a, BigInteger pow, BigInteger mod)=>_modExp.ModPow(a, pow, mod);
+        public BigInteger ModPow(BigInteger a, BigInteger pow, BigInteger mod)=>_modExp.ModPow(a, pow, mod);
         public BigInteger Lambda(BigInteger n)=> _lambda.Lambda(n);
         public BigInteger Gcd(BigInteger a, BigInteger b, GcdMethod method)
         {

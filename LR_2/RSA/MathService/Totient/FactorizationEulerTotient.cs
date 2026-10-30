@@ -6,7 +6,7 @@ namespace RSA.MathService.Totient
     public sealed class FactorizationEulerTotient : IEulerTotientCalculator
     {
         private readonly IFactorizer _factorsFunc;
-        public DefinitionEulerTotient(IFactorizer factorsFunc) => _factorsFunc = factorsFunc ?? throw new ArgumentNullException(nameof(factorsFunc));
+        public FactorizationEulerTotient(IFactorizer factorsFunc) => _factorsFunc = factorsFunc ?? throw new ArgumentNullException(nameof(factorsFunc));
         public BigInteger Phi(BigInteger n)
         {
             if (n <= 0) throw new ArgumentOutOfRangeException(nameof(n), "n > 0");

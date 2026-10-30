@@ -11,10 +11,11 @@ namespace RSA.Primality.Test
         protected override bool PrimalityTest(BigInteger a, BigInteger n)
         {
             var test1 = _mathService.Gcd(a, n, GcdMethod.Binary);
+            if (test1 != 1) return false;
             var (D, S) = DecomposeNumber(n);
 
             var test2 = _mathService.ModPow(a, S , n);
-            if (test1 == 1 && (test2 == 1 || test2 == n - 1)) return true;
+            if ( (test2 == 1 || test2 == n - 1)) return true;
 
             for (int r = 0; r < D - 1; ++r)
             {

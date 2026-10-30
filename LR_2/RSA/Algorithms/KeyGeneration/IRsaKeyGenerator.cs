@@ -4,6 +4,6 @@ namespace RSA.Algorithms.KeyGenerator
 {
     public interface IRsaKeyGenerator
     {
-        KeyPair GenerateKey();
+        KeyPair GenerateKey(bool vulnerable = false);
     }
 }

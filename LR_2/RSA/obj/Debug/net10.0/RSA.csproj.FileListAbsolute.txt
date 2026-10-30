@@ -1,0 +1,12 @@
+/mnt/f/3_kurs/CRYPT/LR_2/RSA/obj/Debug/net10.0/RSA.GeneratedMSBuildEditorConfig.editorconfig
+/mnt/f/3_kurs/CRYPT/LR_2/RSA/obj/Debug/net10.0/RSA.AssemblyInfoInputs.cache
+/mnt/f/3_kurs/CRYPT/LR_2/RSA/obj/Debug/net10.0/RSA.AssemblyInfo.cs
+/mnt/f/3_kurs/CRYPT/LR_2/RSA/obj/Debug/net10.0/RSA.csproj.CoreCompileInputs.cache
+/mnt/f/3_kurs/CRYPT/LR_2/RSA/obj/Debug/net10.0/RSA.sourcelink.json
+/mnt/f/3_kurs/CRYPT/LR_2/RSA/bin/Debug/net10.0/RSA.deps.json
+/mnt/f/3_kurs/CRYPT/LR_2/RSA/bin/Debug/net10.0/RSA.dll
+/mnt/f/3_kurs/CRYPT/LR_2/RSA/bin/Debug/net10.0/RSA.pdb
+/mnt/f/3_kurs/CRYPT/LR_2/RSA/obj/Debug/net10.0/RSA.dll
+/mnt/f/3_kurs/CRYPT/LR_2/RSA/obj/Debug/net10.0/refint/RSA.dll
+/mnt/f/3_kurs/CRYPT/LR_2/RSA/obj/Debug/net10.0/RSA.pdb
+/mnt/f/3_kurs/CRYPT/LR_2/RSA/obj/Debug/net10.0/ref/RSA.dll

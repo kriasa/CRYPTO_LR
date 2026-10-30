@@ -9,7 +9,7 @@ namespace RSA.MathService.Symbols
         public LegendreSymbolCalculator(IModularExponentiation modExp) =>_modExp = modExp ?? throw new ArgumentNullException(nameof(modExp));
         public int LegendreSymbol(BigInteger a, BigInteger p)
         {
-            if (p < 3 || p.IsEven) return throw new ArgumentOutOfRangeException(nameof(p), p, "p - prime number");
+            if (p < 3 || p.IsEven) throw new ArgumentOutOfRangeException(nameof(p), p, "p - prime number");
             var val = Normalize(a, p);
             if (val.IsZero) return 0;
 
