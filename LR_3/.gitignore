@@ -1,0 +1,13 @@
+[Bb]in/
+[Oo]bj/
+[Ll]ogs/
+[Tt]emp/
+
+.vs/
+.idea/
+*.user
+*.suo
+*.cache
+
+Output/
+TestData/
