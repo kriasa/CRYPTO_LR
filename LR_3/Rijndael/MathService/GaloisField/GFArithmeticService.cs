@@ -40,6 +40,5 @@ namespace Rijndael.MathService.GaloisField
             }
             return res;
         }
-
     }
 }
