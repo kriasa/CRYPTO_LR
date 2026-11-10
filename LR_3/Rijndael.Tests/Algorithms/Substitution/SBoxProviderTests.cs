@@ -18,11 +18,7 @@ public sealed class SBoxProviderTests
     private readonly IMathGFService _mathService = new MathGFService();
 
     private SBoxProvider CreateProvider(byte module)
-        => new(_mathService, module);
-
-    // -------------------------------------------------------
-    // AES module: 0x1B
-    // -------------------------------------------------------
+        => new(module,_mathService);
 
     [Theory]
     [InlineData(0x00, 0x63)]
@@ -51,10 +47,6 @@ public sealed class SBoxProviderTests
 
         Assert.Equal(expected, provider.InvSub(input));
     }
-
-    // -------------------------------------------------------
-    // Other irreducible modules
-    // -------------------------------------------------------
 
     [Theory]
     [MemberData(nameof(GetModules))]
@@ -107,10 +99,6 @@ public sealed class SBoxProviderTests
             yield return new object[] { module };
     }
 
-    // -------------------------------------------------------
-    // Invalid module
-    // -------------------------------------------------------
-
     [Theory]
     [InlineData(0x00)]
     [InlineData(0x01)]
@@ -126,6 +114,6 @@ public sealed class SBoxProviderTests
     public void Constructor_NullMathService_Throws()
     {
         Assert.Throws<ArgumentNullException>(
-            () => new SBoxProvider(null!, 0x1B));
+            () => new SBoxProvider(0x1B, null!));
     }
 }

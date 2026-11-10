@@ -12,8 +12,8 @@ namespace Rijndael.Algorithms.Substitution
         private readonly IMathGFService _service;
         private readonly Lazy<byte[]> _sBox;
         private readonly Lazy<byte[]> _invSBox;
-        public SBoxProvider(IMathGFService service, byte module){
-
+        public SBoxProvider(byte module, IMathGFService service)
+        {
             ArgumentNullException.ThrowIfNull(service);
             _service = service;
 
@@ -23,6 +23,7 @@ namespace Rijndael.Algorithms.Substitution
             _sBox = new Lazy<byte[]>(GenerateSBox);
             _invSBox = new Lazy<byte[]>(GenerateInvSBox);
         }
+        public SBoxProvider(byte module) : this(module, new MathGFService()){}
         public byte Sub(byte value) => _sBox.Value[value];
         public byte InvSub(byte value) => _invSBox.Value[value];
         private byte[] GenerateSBox()
