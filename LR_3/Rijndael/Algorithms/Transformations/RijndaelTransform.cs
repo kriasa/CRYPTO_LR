@@ -3,7 +3,7 @@ using Rijndael.MathService;
 using Rijndael.Algorithms.Substitution;
 using System.Data;
 
-namespace Rijndael.Algorithms.Transforms
+namespace Rijndael.Algorithms.Transformations
 {
     public sealed class RijndaelTransform : IRijndaelTransform
     {
@@ -24,6 +24,8 @@ namespace Rijndael.Algorithms.Transforms
             this(blockSize, module, new MathGFService(), new SBoxProvider(module)){}
         public void SubBytes(byte[] data)
         {
+            ThrowIfInvalid(data);
+
             for (int i = 0; i < data.Length; ++i)
             {
                 data[i] = _sBoxBuild.Sub(data[i]);
@@ -31,7 +33,9 @@ namespace Rijndael.Algorithms.Transforms
         }
         public void ShiftRows(byte[] data)
         {
-            for (int i = 1; i < RijndaelSpecification.Nb_rows; ++i)
+            ThrowIfInvalid(data);
+
+            for (int i = 1; i < RijndaelSpecification.StateRows; ++i)
             {
                 RotateRowLeft(data, i, _shift[i], _nb);
             }
@@ -47,14 +51,16 @@ namespace Rijndael.Algorithms.Transforms
         }
         public void MixColumns(byte[] data)
         {
+            ThrowIfInvalid(data);
+
             for (int i = 0; i < _nb; ++i)
             {
                 MultColumn(data, i, RijndaelSpecification.MixColumnsVector);
             }
         }
-        private void MultColumn(byte[] data, int k, byte[] vector)
+        private void MultColumn(byte[] data, int k, ReadOnlySpan<byte> vector)
         {
-            var index = k * RijndaelSpecification.Nb_rows;
+            var index = k * RijndaelSpecification.StateRows;
 
             var s0 = data[index];
             var s1 = data[index + 1];
@@ -95,8 +101,8 @@ namespace Rijndael.Algorithms.Transforms
         {
             while (from < to)
             {
-                var k = row + RijndaelSpecification.Nb_rows * from;
-                var j = row + RijndaelSpecification.Nb_rows * to;
+                var k = row + RijndaelSpecification.StateRows * from;
+                var j = row + RijndaelSpecification.StateRows * to;
 
                 (data[k], data[j]) = (data[j], data[k]);
                 ++from;
@@ -106,6 +112,8 @@ namespace Rijndael.Algorithms.Transforms
 
         public void InvSubBytes(byte[] data)
         {
+            ThrowIfInvalid(data);
+
             for (int i = 0; i < data.Length; ++i)
             {
                 data[i] = _sBoxBuild.InvSub(data[i]);
@@ -113,16 +121,27 @@ namespace Rijndael.Algorithms.Transforms
         }
         public void InvShiftRows(byte[] data)
         {
-            for (int i = 1; i < RijndaelSpecification.Nb_rows; ++i)
+            ThrowIfInvalid(data);
+
+            for (int i = 1; i < RijndaelSpecification.StateRows; ++i)
             {
                 RotateRowLeft(data, i, _nb - _shift[i], _nb);
             }
         }
         public void InvMixColumns(byte[] data)
         {
+            ThrowIfInvalid(data);
+
             for (int i = 0; i < _nb; ++i)
             {
                 MultColumn(data, i, RijndaelSpecification.InvMixColumnsVector);
+            }
+        }
+        private void ThrowIfInvalid(byte[] data)
+        {
+            if (data.Length != RijndaelSpecification.StateRows * _nb)
+            {
+                throw new ArgumentException("incorrect length data", nameof(data));
             }
         }
     }

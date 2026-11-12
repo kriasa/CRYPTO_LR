@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using Rijndael.Algorithms.Transforms;
+using Rijndael.Algorithms.Transformations;
 using Rijndael.Core.Interfaces;
 using Rijndael.MathService;
 using Rijndael.Algorithms.Substitution;
@@ -30,30 +30,30 @@ namespace Rijndael.Algorithms
         public byte[][] GenerateRoundKeys(byte[] key)
         {
             ArgumentNullException.ThrowIfNull(key);
-            if (key.Length != _nk * RijndaelSpecification.Nb_rows) throw new ArgumentException("invalid key length", nameof(key));
+            if (key.Length != _nk * RijndaelSpecification.StateRows) throw new ArgumentException("invalid key length", nameof(key));
 
-            var words = new byte[_nb * (_round + 1) * RijndaelSpecification.Nb_rows];
+            var words = new byte[_nb * (_round + 1) * RijndaelSpecification.StateRows];
             key.CopyTo(words);
 
-            Span<byte> tmp = stackalloc byte[RijndaelSpecification.Nb_rows];
+            Span<byte> tmp = stackalloc byte[RijndaelSpecification.StateRows];
 
             for (int w = _nk; w < _nb * (_round + 1); ++w)
             {
-                words.AsSpan((w - 1) * RijndaelSpecification.Nb_rows, RijndaelSpecification.Nb_rows).CopyTo(tmp);
+                words.AsSpan((w - 1) * RijndaelSpecification.StateRows, RijndaelSpecification.StateRows).CopyTo(tmp);
 
                 if (w % _nk == 0)
                 {
                     RotWord(tmp);
                     SubWord(tmp);
                     tmp[0] = _service.Add(tmp[0], _rcon[w / _nk - 1]);
-                }else if (_nk == 8 && w % _nk == RijndaelSpecification.Nb_rows)
+                }else if (_nk == 8 && w % _nk == RijndaelSpecification.StateRows)
                 {
                     SubWord(tmp);
                 }
 
-                for (int k = 0; k < RijndaelSpecification.Nb_rows; ++k)
+                for (int k = 0; k < RijndaelSpecification.StateRows; ++k)
                 {
-                    words[k + w * RijndaelSpecification.Nb_rows] = _service.Add(tmp[k], words[k + (w -_nk)* RijndaelSpecification.Nb_rows]);
+                    words[k + w * RijndaelSpecification.StateRows] = _service.Add(tmp[k], words[k + (w -_nk)* RijndaelSpecification.StateRows]);
                 }
             }
 
@@ -61,7 +61,7 @@ namespace Rijndael.Algorithms
 
             for (int r = 0; r <=_round; ++r)
             {
-                var totalKey = _nb * RijndaelSpecification.Nb_rows;
+                var totalKey = _nb * RijndaelSpecification.StateRows;
                 roundKeys[r] = new byte[totalKey];
                 Array.Copy(words, r * totalKey, roundKeys[r], 0, totalKey);
             }

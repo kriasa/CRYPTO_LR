@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Rijndael.Algorithms.Substitution;
 using Rijndael.MathService;
 using Xunit;
@@ -18,7 +20,7 @@ public sealed class SBoxProviderTests
     private readonly IMathGFService _mathService = new MathGFService();
 
     private SBoxProvider CreateProvider(byte module)
-        => new(module,_mathService);
+        => new(module, _mathService);
 
     [Theory]
     [InlineData(0x00, 0x63)]
@@ -96,7 +98,9 @@ public sealed class SBoxProviderTests
     public static IEnumerable<object[]> GetModules()
     {
         foreach (byte module in IrreducibleModules)
+        {
             yield return new object[] { module };
+        }
     }
 
     [Theory]
@@ -115,5 +119,14 @@ public sealed class SBoxProviderTests
     {
         Assert.Throws<ArgumentNullException>(
             () => new SBoxProvider(0x1B, null!));
+    }
+
+    [Fact]
+    public void Constructor_WithoutMathService_CreatesProvider()
+    {
+        var provider = new SBoxProvider(0x1B);
+
+        Assert.Equal(0x63, provider.Sub(0x00));
+        Assert.Equal(0x52, provider.InvSub(0x00));
     }
 }

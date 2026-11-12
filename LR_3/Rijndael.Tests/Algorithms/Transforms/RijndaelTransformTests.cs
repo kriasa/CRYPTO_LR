@@ -2,7 +2,7 @@
 using System.Linq;
 using Rijndael.Algorithms;
 using Rijndael.Algorithms.Substitution;
-using Rijndael.Algorithms.Transforms;
+using Rijndael.Algorithms.Transformations;
 using Rijndael.MathService;
 using Xunit;
 
@@ -43,11 +43,18 @@ namespace Rijndael.Tests.Algorithms.Transforms
             byte expected)
         {
             var transform = CreateTransform(RijndaelBlockSize.Bits128);
-            byte[] data = { input };
+
+            byte[] data = Enumerable
+                .Repeat(input, (int)RijndaelBlockSize.Bits128)
+                .ToArray();
 
             transform.SubBytes(data);
 
-            Assert.Equal(expected, data[0]);
+            byte[] expectedData = Enumerable
+                .Repeat(expected, data.Length)
+                .ToArray();
+
+            Assert.Equal(expectedData, data);
         }
 
         [Theory]
@@ -61,11 +68,18 @@ namespace Rijndael.Tests.Algorithms.Transforms
             byte expected)
         {
             var transform = CreateTransform(RijndaelBlockSize.Bits128);
-            byte[] data = { input };
+
+            byte[] data = Enumerable
+                .Repeat(input, (int)RijndaelBlockSize.Bits128)
+                .ToArray();
 
             transform.InvSubBytes(data);
 
-            Assert.Equal(expected, data[0]);
+            byte[] expectedData = Enumerable
+                .Repeat(expected, data.Length)
+                .ToArray();
+
+            Assert.Equal(expectedData, data);
         }
 
         [Theory]

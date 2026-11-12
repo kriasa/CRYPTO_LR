@@ -1,7 +1,7 @@
 
 using Rijndael.Algorithms;
 using Rijndael.Algorithms.Substitution;
-using Rijndael.Algorithms.Transforms;
+using Rijndael.Algorithms.Transformations;
 using Rijndael.MathService;
 using Xunit;
 
@@ -137,11 +137,11 @@ namespace Rijndael.Tests.Algorithms
         {
             int keyLength =
                 RijndaelSpecification.GetKeyColumnsCount(keySize)
-                * RijndaelSpecification.Nb_rows;
+                * RijndaelSpecification.StateRows;
 
             int blockLength =
                 RijndaelSpecification.GetColumnsCount(blockSize)
-                * RijndaelSpecification.Nb_rows;
+                * RijndaelSpecification.StateRows;
 
             var key = new byte[keyLength];
 

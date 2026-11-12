@@ -1,4 +1,4 @@
-namespace Rijndael.Algorithms.Transforms
+namespace Rijndael.Algorithms.Transformations
 {
     public interface IRijndaelTransform
     {
