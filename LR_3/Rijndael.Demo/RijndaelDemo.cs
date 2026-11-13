@@ -1,109 +1,208 @@
-using System.Numerics;
-using System.Text;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using Rijndael.Algorithms;
+using Rijndael.Core;
+using Rijndael.Core.Modes;
+using Rijndael.Core.Padding;
+using Rijndael.MathService;
 
-namespace RSA.Demo
+namespace Rijndael.Demo
 {
-    public static class RijndaelDemo
+    public sealed class RijndaelDemo
     {
-        public static void RunArrayDemo()
+        private const byte Module = 0x1B;
+        private const int BitPerByte = 8;
+        private const int BufSize = 81920;
+
+        private readonly string _testDataDir;
+        private readonly string _outputDir;
+        private readonly IMathGFService _service;
+
+        public RijndaelDemo(string testDataDirectory, string outputDirectory)
         {
-            
+            _testDataDir = testDataDirectory;
+            _outputDir = outputDirectory;
+            _service = new MathGFService();
+            Directory.CreateDirectory(_outputDir);
         }
-        public static async Task RunFileDemoAsync()
+
+        public void RunArrayDemo(CipherModeType mode, PaddingModeType padding)
         {
-            
-        }
-        public static void Run()
-        {
+            // Console.WriteLine(string.Join(", ", _service.IrreducibilityPolynomials8().Select(p => $"0x{p:X2}")));
+
+            foreach (var (block, key) in Combinations())
+            {
+                int blockSize = (int)block;
+                var context = CreateContext(block, key, mode, padding);
+
+                Console.WriteLine();
+                Console.WriteLine($"Block {blockSize * BitPerByte} bit, key {(int)key * BitPerByte} bit");
+
+                foreach (byte[] input in TestArrays(blockSize))
+                {
+                    byte[] output = Array.Empty<byte>();
+                    string status;
+                    ConsoleColor color;
+                    try
+                    {
+                        context.Encrypt(input, out byte[] encrypted);
+                        context.Decrypt(encrypted, out output);
+
+                        if (output.SequenceEqual(input))
+                        {
+                            status = "[ OK ]";
+                            color = ConsoleColor.Green;
+                        }
+                        else
+                        {
+                            status = "[FAIL]";
+                            color = ConsoleColor.Red;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        status = $"[FAIL] {ex.GetType().Name}: {ex.Message}";
+                        color = ConsoleColor.Red;
+                    }
+
+                    Write(status, color);
+                    Console.WriteLine($" in={Hex(input)}  out={Hex(output)}");
+                }
+            }
+
             Console.WriteLine();
-            Console.WriteLine("RSA");
+            Console.WriteLine($"Mode {mode}, padding {padding}:");
+        }
 
-            IRsaService rsa = new RsaService(RsaService.PrimalityTest.Miller, 0.99, 128);
-            BigInteger n = rsa.PublicKey.N;
-            BigInteger e = rsa.PublicKey.E;
+        private static IEnumerable<byte[]> TestArrays(int blockSize)
+        {
+            yield return Array.Empty<byte>();
+            yield return new byte[] { 0x00 };
+            yield return new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00 };
+            yield return new byte[] { 0x42 };
+            yield return new byte[] { 0x00, 0x00, 0x55, 0xAA };
+            yield return new byte[] { 0xAA, 0xBB, 0x00, 0x00 };
+            yield return RandomBytes(blockSize - 1,1);
+            yield return RandomBytes(blockSize, 1);
+        }
 
-            Console.WriteLine($"N {n.GetBitLength()}");
-            Console.WriteLine($"E {e}\n");
-
-            Console.WriteLine("BigInt");
-            TestNumber(rsa, 0, "0");
-            TestNumber(rsa, 1, "1");
-            TestNumber(rsa, 2, "2");
-            TestNumber(rsa, 1234567890123456789, "1234567890123456789");
-
-            Console.WriteLine("byte[]");
-
-            byte[] zeroByte = new byte[] { 0x00 };
-            byte[] decZero = rsa.Decrypt(rsa.Encrypt(zeroByte));
-            bool zeroOk = new BigInteger(decZero, isUnsigned: true) == 0;
-            PrintStatus("new byte[] { 0x00 }", zeroOk);
-
-            TestBytesExact(rsa, new byte[] { 0x42 }, "{ 0x42 }");
-            TestBytesExact(rsa, new byte[] { 0x00, 0x00, 0x55, 0xAA }, "{ 0x00, 0x00, 0x55, 0xAA }");
-            TestBytesExact(rsa, new byte[] { 0xFF, 0xFF, 0x01 }, "{ 0xFF, 0xFF, 0x01 }");
-            TestBytesExact(rsa, new byte[] { 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF }, "{ 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF }");
-
-            byte[] randomBytes = new byte[16];
-            Random.Shared.NextBytes(randomBytes);
-            randomBytes[^1] |= 1;
-            TestBytesExact(rsa, randomBytes, "random byte");
-
-            Console.WriteLine("text");
-            TestString(rsa, "A", "\"A\"");
-            TestString(rsa, "Hello, World!", "\"Hello, World!\"");
-
-            Console.WriteLine("RegenerateKeys");
-
-            BigInteger oldN = rsa.PublicKey.N;
-            byte[] secretBytes = Encoding.ASCII.GetBytes("secret data");
-            byte[] oldCipher = rsa.Encrypt(secretBytes);
-
-            rsa.RegenerateKeys();
-            PrintStatus("смена ключа N", rsa.PublicKey.N != oldN);
-
-            bool cantDecryptOld;
-            try
+        public async Task RunFileDemoAsync(CipherModeType mode, PaddingModeType padding, string fileName)
+        {
+            string? source = ResolvePath(fileName);
+            if (source is null)
             {
-                byte[] corrupted = rsa.Decrypt(oldCipher);
-                cantDecryptOld = !corrupted.AsSpan().SequenceEqual(secretBytes);
+                Console.WriteLine($"File not found: {fileName}");
+                return;
             }
-            catch
+
+            string name = Path.GetFileNameWithoutExtension(source);
+            string extension = Path.GetExtension(source);
+            long sourceSize = new FileInfo(source).Length;
+
+            Console.WriteLine();
+            Console.WriteLine($"Mode: {mode}, padding: {padding}");
+
+            foreach (var (block, key) in Combinations())
             {
-                cantDecryptOld = true;
+                string tag = $"b{(int)block * BitPerByte}_k{(int)key * BitPerByte}";
+                string encryptedPath = Path.Combine(_outputDir, $"{name}.{tag}.enc");
+                string decryptedPath = Path.Combine( _outputDir, $"{name}.{tag}.dec{extension}");
+                string title = $"block {(int)block * BitPerByte}, key {(int)key * BitPerByte}";
+
+                try
+                {
+                    var context = CreateContext(block, key, mode, padding);
+
+                    var watch = Stopwatch.StartNew();
+
+                    await context.EncryptFileAsync(source, encryptedPath);
+                    await context.DecryptFileAsync(encryptedPath, decryptedPath);
+
+                    watch.Stop();
+                    bool same = FilesEqual(source, decryptedPath);
+
+                    Write(same ? "[ OK ]" : "[FAIL]", same ? ConsoleColor.Green : ConsoleColor.Red);
+
+                    Console.WriteLine($" {title}: {sourceSize} -> " + $"{new FileInfo(encryptedPath).Length} -> " + $"{new FileInfo(decryptedPath).Length} bytes");
+                }
+                catch (Exception ex)
+                {
+                    Write("[FAIL]", ConsoleColor.Red);
+                    Console.WriteLine($" {title}: {ex.GetType().Name}: {ex.Message}");
+                }
             }
-            PrintStatus("Защита от расшифровки старых данных новым ключом", cantDecryptOld);
+            Console.WriteLine();
         }
-
-        private static void TestNumber(IRsaService rsa, BigInteger num, string title)
+        private string? ResolvePath(string fileName)
         {
-            BigInteger cipher = rsa.Encrypt(num);
-            BigInteger decrypted = rsa.Decrypt(cipher);
-            PrintStatus(title, decrypted == num);
+            if (File.Exists(fileName)) return Path.GetFullPath(fileName);
+
+            string inTestData = Path.Combine(_testDataDir, fileName);
+            return File.Exists(inTestData) ? inTestData : null;
         }
-
-        private static void TestBytesExact(IRsaService rsa, byte[] data, string title)
+        private static IEnumerable<(RijndaelBlockSize Block, RijndaelKeySize Key)> Combinations()
         {
-            byte[] cipher = rsa.Encrypt(data);
-            byte[] decrypted = rsa.Decrypt(cipher);
-            PrintStatus(title, data.AsSpan().SequenceEqual(decrypted));
+            return from block in Enum.GetValues<RijndaelBlockSize>() from key in Enum.GetValues<RijndaelKeySize>() select (block, key);
         }
-
-        private static void TestString(IRsaService rsa, string text, string title)
+        private static SymmetricCryptoContext<RijndaelCipher> CreateContext(RijndaelBlockSize block, RijndaelKeySize key,
+            CipherModeType mode,
+            PaddingModeType padding)
         {
-            byte[] raw = Encoding.ASCII.GetBytes(text);
-            byte[] cipher = rsa.Encrypt(raw);
-            byte[] decrypted = rsa.Decrypt(cipher);
-            string restored = Encoding.ASCII.GetString(decrypted);
-            PrintStatus(title, text == restored);
+            byte[] keyBytes = RandomBytes((int)key, 0x5A);
+            byte[] iv = mode == CipherModeType.ECB ? Array.Empty<byte>() : RandomBytes((int)block, 0xC3);
+
+            if (mode == CipherModeType.RandomDelta) iv[^1] |= 1;
+
+            return new SymmetricCryptoContext<RijndaelCipher>(() => new RijndaelCipher(block, key, Module), keyBytes,mode, padding, iv);
         }
-
-        private static void PrintStatus(string title, bool ok)
+        private static byte[] RandomBytes(int length, int seed)
         {
-            Console.ForegroundColor = ok ? ConsoleColor.Green : ConsoleColor.Red;
-            Console.Write($"  [{(ok ? "OK" : "FAIL"),-4}]");
+            var random = new Random(seed);
+            byte[] result = new byte[length];
+            random.NextBytes(result);
+            return result;
+        }
+        private static string Hex(byte[] data)=> data.Length == 0 ? "(empty)" : Convert.ToHexString(data);
+        private static void Write(string text, ConsoleColor color)
+        {
+            Console.ForegroundColor = color;
+            Console.Write(text);
             Console.ResetColor();
-            Console.WriteLine($" {title}");
+        }
+        private static bool FilesEqual(string pathA, string pathB)
+        {
+            using var fileA = File.OpenRead(pathA);
+            using var fileB = File.OpenRead(pathB);
+
+            if (fileA.Length != fileB.Length) return false;
+
+            byte[] bufferA = new byte[BufSize];
+            byte[] bufferB = new byte[BufSize];
+
+            while (true)
+            {
+                int readA = ReadFull(fileA, bufferA);
+                int readB = ReadFull(fileB, bufferB);
+
+                if (readA != readB || !bufferA.AsSpan(0, readA).SequenceEqual(bufferB.AsSpan(0, readB))) return false;
+                if (readA == 0) return true;
+            }
+        }
+        private static int ReadFull(Stream stream, byte[] buffer)
+        {
+            int total = 0;
+
+            while (total < buffer.Length)
+            {
+                int read = stream.Read(buffer, total, buffer.Length - total);
+                if (read == 0) break;
+                total += read;
+            }
+            return total;
         }
     }
 }

@@ -20,12 +20,12 @@ namespace Rijndael.MathService
         public byte Add(byte a, byte b) => _gfService.Add(a, b);
         public byte Multiply(byte a, byte b, byte? module)
         {
-            ValidateModule(module);
+            // ValidateModule(module);
             return module.HasValue ? _gfService.Multiply(a, b, module.Value) : _gfService.Multiply(a, b);
         }
         public byte GetInverse(byte a, byte? module)
         {
-            ValidateModule(module);
+            // ValidateModule(module);
             return module.HasValue ? _gfService.GetInverse(a, module.Value) : _gfService.GetInverse(a);
         }
         public bool IsIrreducible(byte polynomial) => _polinomialsService.IsIrreducible(polynomial);

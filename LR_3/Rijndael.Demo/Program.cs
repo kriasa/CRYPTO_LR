@@ -1,7 +1,8 @@
-﻿
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using Rijndael.Core.Modes;
+using Rijndael.Core.Padding;
 
 namespace Rijndael.Demo
 {
@@ -20,32 +21,26 @@ namespace Rijndael.Demo
 
             while (true)
             {
-                Console.WriteLine();
-                Console.WriteLine("1 Encrypt/decrypt byte arrays");
-                Console.WriteLine("2 Encrypt/decrypt files");
-                Console.WriteLine("0 Exit");
-                Console.Write("\n>> ");
+                int action = ConsoleMenu.ChooseAction();
+                if (action == 0) return;
 
-                var key = Console.ReadKey().KeyChar;
-                Console.WriteLine();
-
-                switch (key)
+                CipherModeType mode = ConsoleMenu.ChooseMode();
+                PaddingModeType padding = ConsoleMenu.ChoosePadding();
+                try
                 {
-                    case '1':
-                        demo.RunArrayDemo();
-                        break;
-
-                    case '2':
-                        await demo.RunFileDemoAsync();
-                        break;
-
-                    case '0':
-                        return;
-
-                    default:
-                        Console.WriteLine("???>>");
-                        Console.ReadKey();
-                        break;
+                    if (action == 1)
+                    {
+                        demo.RunArrayDemo(mode, padding);
+                    }
+                    else
+                    {
+                        string fileName = ConsoleMenu.AskFileName();
+                        await demo.RunFileDemoAsync(mode, padding, fileName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.GetType().Name}: {ex.Message}");
                 }
             }
         }

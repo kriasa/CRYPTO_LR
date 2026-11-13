@@ -1,3 +1,4 @@
+
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -7,7 +8,7 @@ using Rijndael.Core.Interfaces;
 
 namespace Rijndael.Core
 {
-    public sealed class SymmetricCryptoContext<TCipher> where TCipher : ISymmetricCipher, new()
+    public sealed class SymmetricCryptoContext<TCipher> where TCipher : ISymmetricCipher
     {
         private const int TargetChunkSizeBytes = 1024 * 1024;
         private const int FileStreamBufferSize = 81920;
@@ -18,10 +19,11 @@ namespace Rijndael.Core
         private readonly object[] _extraParams;
         private readonly bool _requiresIv;
         private readonly int _chunkSizeBytes;
-        public SymmetricCryptoContext(byte[] key, CipherModeType cipherMode, PaddingModeType paddingMode, byte[]? iv = null, params object[] extraParams)
+        public SymmetricCryptoContext(Func<TCipher> cipherFactory, byte[] key, CipherModeType cipherMode, PaddingModeType paddingMode, byte[]? iv = null, params object[] extraParams)
         {
             ArgumentNullException.ThrowIfNull(key);
-            _cipher = new TCipher();
+            ArgumentNullException.ThrowIfNull(cipherFactory);
+            _cipher = cipherFactory();
             _cipher.SetKey(key);
             _cipherModeStrategy = StrategyFactory.CreateCipherMode(cipherMode);
             _paddingStrategy = StrategyFactory.CreatePadding(paddingMode);
@@ -44,7 +46,6 @@ namespace Rijndael.Core
         public Task<byte[]> EncryptAsync(byte[] data) => Task.Run(() => EncryptCore(data));
         public Task<byte[]> DecryptAsync(byte[] data) => Task.Run(() => DecryptCore(data));
         public void EncryptFile(string inputFilePath, string outputFilePath) => EncryptFileAsync(inputFilePath, outputFilePath).GetAwaiter().GetResult();
-
         public void DecryptFile(string inputFilePath, string outputFilePath) => DecryptFileAsync(inputFilePath, outputFilePath).GetAwaiter().GetResult();
         public async Task EncryptFileAsync(string inputFilePath, string outputFilePath)
         {
@@ -67,22 +68,17 @@ namespace Rijndael.Core
                 bool isLastChunk = position >= totalLength;
 
                 byte[] toProcess = isLastChunk ? _paddingStrategy.Pad(chunk, blockSize) : chunk;
-
-                byte[] processed = await Task.Run(() => _cipherModeStrategy.Encrypt(
-                        toProcess, _cipher, runningIv, _extraParams, blockIndexOffset))
-                    .ConfigureAwait(false);
+                byte[] processed = await Task.Run(() => _cipherModeStrategy.Encrypt(toProcess, _cipher, runningIv, _extraParams, blockIndexOffset)).ConfigureAwait(false);
 
                 await output.WriteAsync(processed.AsMemory()).ConfigureAwait(false);
 
-                AdvanceState(toProcess.Length, toProcess, processed, isEncrypting: true,
-                    ref runningIv, ref blockIndexOffset);
+                AdvanceState(toProcess.Length, toProcess, processed, isEncrypting: true, ref runningIv, ref blockIndexOffset);
             }
 
             if (totalLength == 0)
             {
                 byte[] toProcess = _paddingStrategy.Pad(Array.Empty<byte>(), blockSize);
-                byte[] processed = _cipherModeStrategy.Encrypt(
-                    toProcess, _cipher, runningIv, _extraParams, blockIndexOffset);
+                byte[] processed = _cipherModeStrategy.Encrypt(toProcess, _cipher, runningIv, _extraParams, blockIndexOffset);
                 await output.WriteAsync(processed.AsMemory()).ConfigureAwait(false);
             }
         }
@@ -94,8 +90,15 @@ namespace Rijndael.Core
             int blockSize = _cipher.BlockSize;
 
             long totalLength = input.Length;
-            if (totalLength == 0 || totalLength % blockSize != 0)
-                throw new InvalidPaddingException("len(C_file) % len(block) != 0");
+
+            if (totalLength % blockSize != 0) throw new InvalidPaddingException("len(C_file) % len(block) != 0");
+
+            if (totalLength == 0)
+            {
+                _paddingStrategy.Unpad(Array.Empty<byte>(), blockSize);
+                await using var empty = OpenWrite(outputFilePath);
+                return;
+            }
 
             await using var output = OpenWrite(outputFilePath);
 
@@ -110,9 +113,7 @@ namespace Rijndael.Core
                 position += chunk.Length;
                 bool isLastChunk = position >= totalLength;
 
-                byte[] decrypted = await Task.Run(() => _cipherModeStrategy.Decrypt(
-                        chunk, _cipher, runningIv, _extraParams, blockIndexOffset))
-                    .ConfigureAwait(false);
+                byte[] decrypted = await Task.Run(() => _cipherModeStrategy.Decrypt(chunk, _cipher, runningIv, _extraParams, blockIndexOffset)).ConfigureAwait(false);
 
                 byte[] toWrite = isLastChunk ? _paddingStrategy.Unpad(decrypted, blockSize) : decrypted;
                 await output.WriteAsync(toWrite.AsMemory()).ConfigureAwait(false);
